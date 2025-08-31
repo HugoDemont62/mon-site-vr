@@ -1,66 +1,58 @@
 import React, { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useXR, useController } from '@react-three/xr'
-import * as THREE from 'three'
+import { Vector3 } from 'three'
 
 function Navigation() {
   const { player } = useXR()
   const leftController = useController('left')
-  const rightController = useController('right')
-  const velocityRef = useRef(new THREE.Vector3())
+  const velocityRef = useRef(new Vector3())
 
   useFrame((state, delta) => {
     if (!player) return
 
-    // Variables de mouvement
-    const speed = 3 // Vitesse de déplacement
-    const damping = 0.9 // Ralentissement progressif
+    const speed = 3
+    const damping = 0.9
+    const moveVector = new Vector3()
 
-    // Direction du mouvement basée sur les contrôleurs VR
-    const moveVector = new THREE.Vector3()
-
-    // Mouvement avec le contrôleur gauche (joystick)
-    if (leftController?.inputSource?.gamepad) {
-      const gamepad = leftController.inputSource.gamepad
-      const axes = gamepad.axes
-
-      if (axes.length >= 2) {
-        // Axes du joystick (x, y)
-        moveVector.x = axes[2] || 0 // Joystick horizontal
-        moveVector.z = axes[3] || 0 // Joystick vertical
+    // Mouvement VR avec contrôleur
+    if (leftController?.inputSource?.gamepad?.axes) {
+      const axes = leftController.inputSource.gamepad.axes
+      if (axes.length >= 4) {
+        moveVector.x = axes[2] || 0
+        moveVector.z = axes[3] || 0
       }
     }
 
-    // Appliquer le mouvement
-    if (moveVector.length() > 0.1) { // Seuil pour éviter la dérive
-      // Orienter le mouvement selon la direction de la tête
-      const headRotation = new THREE.Euler()
-      if (state.camera.rotation) {
-        headRotation.copy(state.camera.rotation)
-        headRotation.x = 0 // On garde seulement la rotation Y (horizontale)
-        headRotation.z = 0
+    // Mouvement desktop (fallback)
+    if (moveVector.length() === 0) {
+      // Simple contrôles par défaut si pas de VR
+      const keyboard = {
+        w: false, s: false, a: false, d: false
       }
 
-      // Appliquer la rotation à la direction
-      moveVector.applyEuler(headRotation)
-      moveVector.y = 0 // Pas de mouvement vertical
-      moveVector.normalize()
-      moveVector.multiplyScalar(speed * delta)
-
-      // Mettre à jour la vélocité
-      velocityRef.current.add(moveVector)
+      // Tu peux étendre ça avec les événements clavier si nécessaire
     }
 
-    // Appliquer le ralentissement
+    // Appliquer le mouvement si détecté
+    if (moveVector.length() > 0.1) {
+      const headRotation = state.camera.rotation.y
+
+      const rotatedX = moveVector.x * Math.cos(headRotation) - moveVector.z * Math.sin(headRotation)
+      const rotatedZ = moveVector.x * Math.sin(headRotation) + moveVector.z * Math.cos(headRotation)
+
+      velocityRef.current.x += rotatedX * speed * delta
+      velocityRef.current.z += rotatedZ * speed * delta
+    }
+
     velocityRef.current.multiplyScalar(damping)
 
-    // Déplacer le joueur
     if (velocityRef.current.length() > 0.01) {
       player.position.add(velocityRef.current)
     }
   })
 
-  return null // Ce composant ne rend rien visuellement
+  return null
 }
 
 export default Navigation
