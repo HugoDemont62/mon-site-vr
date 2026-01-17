@@ -1,12 +1,12 @@
 import { Clock, WebGLRenderer, Scene as ThreeScene, PerspectiveCamera } from 'three'
-import type { Scene } from './PortfolioScene'
+import type { PortfolioScene } from './PortfolioScene'
 import { PostProcessing } from './PostProcessing'
 import { VRManager } from './VRManager'
 
 export class Engine {
   renderer: WebGLRenderer
   clock: Clock
-  scene?: Scene
+  scene?: PortfolioScene
   vrManager?: VRManager
   private post?: PostProcessing
 
