@@ -1,4 +1,4 @@
-import { Vector3, Group, WebXRManager } from 'three'
+import { Vector3, Group, WebGLRenderer, Scene as ThreeScene } from 'three'
 import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js'
 
 /**
@@ -25,8 +25,8 @@ export class VRControls {
   private thumbstickRight = { x: 0, y: 0 }
 
   constructor(
-    private scene: Group,
-    private renderer: { xr?: { isPresenting?: boolean, getSession?: () => XRSession | null } }
+    private scene: ThreeScene,
+    private renderer: WebGLRenderer
   ) {
     this.setupDesktopControls()
   }
@@ -59,30 +59,31 @@ export class VRControls {
     })
   }
 
-  setupVRControllers (renderer: WebXRManager) {
+  setupVRControllers () {
+    const xr = this.renderer.xr
     const factory = new XRControllerModelFactory()
 
     // Contrôleur gauche (mouvement)
-    this.controller1 = renderer.xr.getController(0)
-    this.controller1.addEventListener('connected', (e) => {
+    this.controller1 = xr.getController(0) as unknown as Group
+    ;(this.controller1 as any).addEventListener('connected', (e: any) => {
       const data = (e as { data?: { gamepad?: Gamepad } }).data
       if (data?.gamepad) this.updateLeftThumbstick(data.gamepad)
     })
     this.scene.add(this.controller1)
 
-    const grip1 = renderer.xr.getControllerGrip(0)
+    const grip1 = xr.getControllerGrip(0)
     grip1.add(factory.createControllerModel(grip1))
     this.scene.add(grip1)
 
     // Contrôleur droit (rotation)
-    this.controller2 = renderer.xr.getController(1)
-    this.controller2.addEventListener('connected', (e) => {
+    this.controller2 = xr.getController(1) as unknown as Group
+    ;(this.controller2 as any).addEventListener('connected', (e: any) => {
       const data = (e as { data?: { gamepad?: Gamepad } }).data
       if (data?.gamepad) this.updateRightThumbstick(data.gamepad)
     })
     this.scene.add(this.controller2)
 
-    const grip2 = renderer.xr.getControllerGrip(1)
+    const grip2 = xr.getControllerGrip(1)
     grip2.add(factory.createControllerModel(grip2))
     this.scene.add(grip2)
   }
@@ -149,8 +150,10 @@ export class VRControls {
     if (!this.isVRActive()) return
 
     const session = this.renderer.xr?.getSession?.()
-    if (session?.inputSources) {
-      for (const source of session.inputSources) {
+    if (session && (session as any).inputSources) {
+      const inputs = (session as any).inputSources
+      for (let i = 0; i < inputs.length; i++) {
+        const source = inputs[i]
         if (source.gamepad) {
           if (source.handedness === 'left') {
             this.updateLeftThumbstick(source.gamepad)
