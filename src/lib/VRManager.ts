@@ -1,4 +1,4 @@
-import { WebGLRenderer, PerspectiveCamera, Vector3, Group } from 'three'
+import { WebGLRenderer, PerspectiveCamera, Vector3, Group, Scene as ThreeScene } from 'three'
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
 import { VRControls } from './VRControls'
 
@@ -14,7 +14,7 @@ export class VRManager {
   constructor(
     private renderer: WebGLRenderer,
     private camera: PerspectiveCamera,
-    private scene: Group
+    private scene: ThreeScene
   ) {
     this.cameraRig = new Group()
     this.cameraRig.name = 'CameraRig'

@@ -1,4 +1,4 @@
-import { Clock, WebGLRenderer, Scene as ThreeScene, PerspectiveCamera } from 'three'
+import { Clock, WebGLRenderer, Scene as ThreeScene, PerspectiveCamera, Group } from 'three'
 import type { PortfolioScene } from './PortfolioScene'
 import { PostProcessing } from './PostProcessing'
 import { VRManager } from './VRManager'
@@ -31,13 +31,13 @@ export class Engine {
    * Active le support VR
    * À appeler après avoir créé la scène
    */
-  enableVR(camera: PerspectiveCamera, scene: ThreeScene) {
-    this.vrManager = new VRManager(this.renderer, camera, scene)
+  enableVR(camera: PerspectiveCamera, scene: ThreeScene | Group) {
+    this.vrManager = new VRManager(this.renderer, camera, scene as any)
     this.vrManager.enable()
     console.log('🥽 VR Manager activé')
   }
 
-  setScene(S: new (engine: Engine) => Scene) {
+  setScene(S: new (engine: Engine) => PortfolioScene) {
     this.scene = new S(this)
     this.resize()
   }
